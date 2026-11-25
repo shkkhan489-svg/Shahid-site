@@ -5,3 +5,5 @@ create table likes(id uuid primary key default gen_random_uuid(),post_id text,ap
 create table inbox(id uuid primary key default gen_random_uuid(),kind text,name text,email text,phone text,title text,message text,file_url text,replied boolean default false,created_at timestamptz default now());
 insert into storage.buckets(id,name,public) values('uploads','uploads',true) on conflict do nothing;
 alter table posts enable row level security;alter table comments enable row level security;alter table likes enable row level security;alter table inbox enable row level security;
+create table site_content(key text primary key,value text);
+alter table site_content enable row level security;

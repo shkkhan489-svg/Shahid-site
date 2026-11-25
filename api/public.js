@@ -8,4 +8,5 @@ export default async function h(req,res){
  const {data:posts}=await db.from('posts').select('*').order('created_at',{ascending:false});
  const {data:cm}=await db.from('comments').select('post_id,name,body').eq('approved',true);
  const {data:lk}=await db.from('likes').select('post_id').eq('approved',true);
- res.json({posts:(posts||[]).map(p=>({...p,comments:(cm||[]).filter(c=>c.post_id==p.id),likes:(lk||[]).filter(l=>l.post_id==p.id).length}))})}
+ const {data:ct}=await db.from('site_content').select('*');const content=Object.fromEntries((ct||[]).map(r=>[r.key,r.value]));
+ res.json({content,posts:(posts||[]).map(p=>({...p,comments:(cm||[]).filter(c=>c.post_id==p.id),likes:(lk||[]).filter(l=>l.post_id==p.id).length}))})}
