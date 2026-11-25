@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Studio</title>
+<style>body{font:16px/1.6 system-ui;max-width:800px;margin:auto;padding:20px}input,textarea,select,button{font:inherit;padding:10px;border:2px solid #111;width:100%;margin:4px 0;background:#fff}button{background:#FF5A1F;font-weight:600;cursor:pointer;width:auto}.c{border:2px solid #111;padding:12px;margin:10px 0}</style></head><body>
+<h1>Studio</h1><input id="k" type="password" placeholder="Admin password"><button onclick="sessionStorage.k=k.value;load()">Open</button>
+<h2>New post</h2><form id="f"><select name="kind"><option value="post">Home post</option><option value="gallery">Gallery</option><option value="contribution">Contribution</option></select><input name="title" placeholder="Title" required><textarea name="body" rows="4" placeholder="Write..."></textarea><input type="file" name="media" multiple accept="image/*,video/*,audio/*"><label><input type="checkbox" name="social" value="1" style="width:auto"> Also post to social media</label><button>Go live</button></form>
+<h2>Waiting for approval</h2><div id="q"></div><h2>Messages</h2><div id="m"></div>
+<script>
+const H=()=>({'x-admin-key':sessionStorage.k||''});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function load(){const r=await fetch('/api/admin',{headers:H()});if(!r.ok){q.textContent='Wrong password';return}const d=await r.json();
+q.innerHTML=d.comments.map(c=>`<div class=c><b>${esc(c.name)}</b>: ${esc(c.body)}<br><button onclick="act('approve','comments','${c.id}')">Approve</button> <button onclick="act('delete','comments','${c.id}')">Delete</button></div>`).join('')+(d.likes.length?`<div class=c>${d.likes.length} likes waiting <button onclick='likes(${JSON.stringify(d.likes.map(l=>l.id))})'>Approve all</button></div>`:'')||'Nothing waiting.';
+m.innerHTML=d.inbox.map(x=>`<div class=c><b>${esc(x.kind)}</b> ${esc(x.name)} · ${esc(x.phone||'')} · ${esc(x.email||'')}<br>${esc(x.title||'')} ${esc(x.message||'')} ${x.file_url?`<a href="${x.file_url}">file</a>`:''}<br><textarea id="r${x.id}" rows=2 placeholder="Reply"></textarea><button onclick="rep('${x.id}')">${x.replied?'Replied. Send again':'Send reply'}</button></div>`).join('')}
+async function act(action,table,id){await fetch('/api/admin',{method:'POST',headers:H(),body:JSON.stringify({action,table,id})});load()}
+async function likes(ids){for(const id of ids)await act('approve','likes',id)}
+async function rep(id){await fetch('/api/admin',{method:'POST',headers:H(),body:JSON.stringify({action:'reply',id,text:document.getElementById('r'+id).value})});load()}
+f.onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/admin',{method:'POST',headers:H(),body:new FormData(f)});alert(r.ok?'Posted':'Failed');f.reset()};
+if(sessionStorage.k)load();
+</script></body></html>
